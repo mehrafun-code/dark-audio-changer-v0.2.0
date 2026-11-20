@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dark Audio Changer</title>
+<link rel="icon" type="image/png" href="/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --void:#0a0707; --panel:#150e0c; --panel2:#1d1311; --line:#3a2a1c;
+  --ember:#e8420f; --flame:#ff7a1a; --gold:#e8a62b; --bone:#eadfcf; --dim:#9a8a78; --plasma:#e068a8;
+  --display:"Orbitron","Segoe UI",system-ui,sans-serif;
+  --body:"Rajdhani","Segoe UI",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{
+  background:
+    radial-gradient(900px 600px at 18% 42%, rgba(232,66,15,.20), transparent 62%),
+    radial-gradient(700px 500px at 92% 100%, rgba(224,104,168,.10), transparent 60%),
+    var(--void);
+  color:var(--bone); font-family:var(--body); font-size:18px; line-height:1.45;
+  background-attachment:fixed;
+}
+/* fine scanlines */
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:50;
+  background:repeating-linear-gradient(to bottom,rgba(255,255,255,.025) 0 1px,transparent 1px 4px)}
+
+header{display:flex;align-items:center;gap:14px;padding:16px 28px;border-bottom:1px solid var(--line)}
+header img{width:40px;height:40px;object-fit:contain}
+.brand{font-family:var(--display);font-weight:900;font-size:20px;letter-spacing:.14em}
+.brand span{color:var(--flame)}
+.ver{margin-left:auto;font-family:var(--display);font-size:12px;color:var(--dim);border:1px solid var(--line);padding:5px 10px;
+  clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
+
+main{display:grid;grid-template-columns:minmax(300px,1fr) minmax(340px,520px);gap:48px;align-items:center;
+  max-width:1180px;margin:0 auto;padding:40px 28px 64px}
+
+/* ---- logo stage ---- */
+.stage{position:relative;display:grid;place-items:center;aspect-ratio:1/1;max-width:560px;width:100%;margin:0 auto}
+.ring{position:absolute;inset:0;width:100%;height:100%;opacity:.9}
+.ring .spin{transform-origin:50% 50%}
+body.busy .ring .spin{animation:spin 14s linear infinite}
+body.busy .ring .spin2{animation:spin 22s linear infinite reverse}
+@keyframes spin{to{transform:rotate(360deg)}}
+.stage img{position:relative;width:74%;filter:drop-shadow(0 0 28px rgba(232,66,15,.45)) drop-shadow(0 0 4px rgba(232,166,43,.4))}
+body.busy .stage img{animation:pulse 2.4s ease-in-out infinite}
+@keyframes pulse{50%{filter:drop-shadow(0 0 44px rgba(255,122,26,.7)) drop-shadow(0 0 6px rgba(232,166,43,.6))}}
+.tag{position:absolute;bottom:2%;left:50%;transform:translateX(-50%);font-family:var(--display);font-size:12px;letter-spacing:.2em;color:var(--dim);white-space:nowrap}
+
+/* ---- console ---- */
+.console{background:linear-gradient(160deg,var(--panel2),var(--panel));padding:28px;position:relative;
+  clip-path:polygon(26px 0,100% 0,100% calc(100% - 26px),calc(100% - 26px) 100%,0 100%,0 26px)}
+.console::before{content:"";position:absolute;inset:0;pointer-events:none;border:1px solid var(--line);
+  clip-path:inherit;}
+h1{font-family:var(--display);font-size:clamp(24px,3.2vw,34px);margin:0 0 6px;font-weight:900;letter-spacing:.04em;line-height:1.15}
+.sub{margin:0 0 22px;color:var(--dim)}
+
+.drop{display:block;border:1px dashed #5a4128;padding:18px 18px 14px;cursor:pointer;transition:border-color .2s,background .2s;
+  clip-path:polygon(14px 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%,0 14px)}
+.drop:hover,.drop.over,.drop:focus-within{border-color:var(--flame);background:rgba(232,66,15,.07)}
+.drop input{position:absolute;opacity:0;width:1px;height:1px}
+.drop .t{font-weight:700;font-size:20px}
+.drop .s{color:var(--dim);font-size:16px}
+.wave{display:flex;align-items:center;gap:3px;height:44px;margin-top:12px}
+.wave i{flex:1;background:linear-gradient(to top,var(--ember),var(--gold));height:14%;border-radius:1px;opacity:.55}
+body.busy .wave i{opacity:1;animation:eq 1s ease-in-out infinite}
+@keyframes eq{0%,100%{height:12%}50%{height:96%}}
+
+button#go{margin-top:18px;width:100%;border:0;cursor:pointer;color:#1a0904;font-family:var(--display);font-weight:900;font-size:16px;letter-spacing:.12em;
+  padding:15px 20px;background:linear-gradient(90deg,var(--flame),var(--gold));
+  clip-path:polygon(14px 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%,0 14px);transition:filter .2s}
+button#go:hover:not(:disabled){filter:brightness(1.12)}
+button#go:disabled{filter:grayscale(.8) brightness(.55);cursor:not-allowed}
+:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+
+/* pipeline: real sequence, so numbered */
+ol.steps{list-style:none;margin:22px 0 0;padding:0;display:grid;gap:2px}
+ol.steps li{display:flex;gap:12px;align-items:center;padding:7px 0;color:#6f6152;transition:color .3s}
+ol.steps li b{font-family:var(--display);font-size:11px;width:28px;height:28px;display:grid;place-items:center;border:1px solid #4a3623;flex:none}
+ol.steps li.now{color:var(--bone)} ol.steps li.now b{border-color:var(--flame);color:var(--flame);box-shadow:0 0 12px rgba(255,122,26,.5)}
+ol.steps li.ok{color:var(--dim)} ol.steps li.ok b{background:var(--gold);border-color:var(--gold);color:#1a0904}
+.bar{height:4px;background:#2a1d15;margin-top:14px}
+.bar div{height:100%;width:0;background:linear-gradient(90deg,var(--ember),var(--gold));transition:width .5s}
+#msg{min-height:26px;margin:12px 0 0;color:var(--dim)}
+#msg.err{color:#ff6b57}
+#result video{width:100%;margin-top:14px;background:#000;border:1px solid var(--line)}
+a.dl{display:block;margin-top:12px;text-align:center;padding:13px;border:1px solid var(--plasma);color:var(--plasma);text-decoration:none;
+  font-family:var(--display);font-weight:700;letter-spacing:.12em;font-size:14px;transition:background .2s,color .2s;
+  box-shadow:0 0 18px rgba(224,104,168,.25)}
+a.dl:hover{background:var(--plasma);color:#1a0904}
+
+@media(max-width:900px){
+  main{grid-template-columns:1fr;gap:20px;padding-top:20px}
+  .stage{max-width:340px}
+}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <img src="/logo.png" alt="">
+  <div class="brand">DARK <span>AUDIO</span> CHANGER</div>
+  <div class="ver" id="ver">v-</div>
+</header>
+
+<main>
+  <section class="stage" aria-hidden="true">
+    <svg class="ring" viewBox="0 0 400 400" fill="none">
+      <g class="spin2" stroke="#3a2a1c" stroke-width="1"><circle cx="200" cy="200" r="190" stroke-dasharray="2 8"/></g>
+      <g class="spin" stroke="#e8420f" stroke-width="2">
+        <path d="M200 6 A194 194 0 0 1 394 200" stroke-opacity=".9"/>
+        <path d="M200 394 A194 194 0 0 1 6 200" stroke="#e8a62b" stroke-opacity=".9"/>
+      </g>
+      <circle cx="200" cy="200" r="176" stroke="#2a1d15"/>
+    </svg>
+    <img src="/logo.png" alt="DarkDeath Evil logo">
+    <div class="tag">English → हिन्दी</div>
+  </section>
+
+  <section class="console">
+    <h1>Awaaz badlo,<br>Hindi mein.</h1>
+    <p class="sub">English video upload karo. Male ki awaaz male Hindi voice mein, female ki female mein.</p>
+
+    <label class="drop" id="drop">
+      <input type="file" id="file" accept="video/*">
+      <div class="t" id="fname">Video chuno ya yahan chhodo</div>
+      <div class="s" id="fsize">MP4, MOV, MKV, WEBM</div>
+      <div class="wave" id="wave"></div>
+    </label>
+
+    <button id="go" disabled>DUB SHURU KARO</button>
+
+    <div class="bar"><div id="fill"></div></div>
+    <p id="msg"></p>
+
+    <ol class="steps" id="steps"></ol>
+    <div id="result"></div>
+  </section>
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+const STEPS=[["Audio nikalna",5],["English text",15],["Male / female pehchan",35],["Hindi translation",45],["Hindi awaaz banana",50],["Video mein jodna",93]];
+
+fetch('/api/version').then(r=>r.json()).then(v=>$('ver').textContent='v'+v.version);
+
+// waveform bars
+const wave=$('wave'); const heights=[];
+for(let i=0;i<48;i++){const b=document.createElement('i');
+  b.style.height=(10+Math.abs(Math.sin(i*.55))*40+(i%5)*3)+'%';
+  b.style.animationDelay=(i*0.045)+'s';b.style.animationDuration=(.7+(i%7)*.12)+'s';wave.appendChild(b);}
+
+// steps list
+const ol=$('steps');
+STEPS.forEach(([name],i)=>{const li=document.createElement('li');li.innerHTML='<b>'+(i+1)+'</b><span>'+name+'</span>';ol.appendChild(li);});
+function setStage(p){
+  let idx=-1; STEPS.forEach(([,t],i)=>{if(p>=t) idx=i;});
+  [...ol.children].forEach((li,i)=>{li.className=(p>=100||i<idx)?'ok':(i===idx?'now':'');});
+}
+
+// file pick + drag/drop
+const fileEl=$('file'), drop=$('drop');
+function showFile(){const f=fileEl.files[0]; if(!f)return;
+  $('fname').textContent=f.name; $('fsize').textContent=(f.size/1048576).toFixed(1)+' MB'; $('go').disabled=false;}
+fileEl.onchange=showFile;
+['dragenter','dragover'].forEach(e=>drop.addEventListener(e,ev=>{ev.preventDefault();drop.classList.add('over')}));
+['dragleave','drop'].forEach(e=>drop.addEventListener(e,ev=>{ev.preventDefault();drop.classList.remove('over')}));
+drop.addEventListener('drop',ev=>{if(ev.dataTransfer.files.length){fileEl.files=ev.dataTransfer.files;showFile();}});
+
+function fail(text){document.body.classList.remove('busy');$('go').disabled=false;$('msg').className='err';$('msg').textContent=text;}
+
+$('go').onclick=async()=>{
+  const f=fileEl.files[0]; if(!f) return;
+  $('go').disabled=true; $('result').innerHTML=''; $('msg').className=''; $('msg').textContent='Upload ho raha hai...';
+  $('fill').style.width='0'; setStage(0); document.body.classList.add('busy');
+  let job_id;
+  try{
+    const fd=new FormData(); fd.append('file',f);
+    const r=await fetch('/api/dub',{method:'POST',body:fd}); if(!r.ok) throw new Error();
+    job_id=(await r.json()).job_id;
+  }catch(e){return fail('Upload fail hua. Server chal raha hai ya nahi check karo, phir dobara try karo.');}
+  const t=setInterval(async()=>{
+    try{
+      const s=await (await fetch('/api/status/'+job_id)).json();
+      $('fill').style.width=(s.progress||0)+'%'; $('msg').textContent=s.message||''; setStage(s.progress||0);
+      if(s.status==='done'){clearInterval(t);document.body.classList.remove('busy');$('go').disabled=false;$('msg').textContent='Dub taiyar hai.';
+        $('result').innerHTML='<video controls src="/api/download/'+job_id+'"></video><a class="dl" href="/api/download/'+job_id+'" download>DOWNLOAD KARO</a>';}
+      if(s.status==='error'){clearInterval(t);fail(s.message||'Kuch galat hua.');}
+    }catch(e){clearInterval(t);fail('Server se connection toot gaya.');}
+  },2000);
+};
+</script>
+</body>
+</html>
