@@ -1,0 +1,21 @@
+name: Build
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Syntax check
+        run: python -m compileall app
+      - name: Read version
+        id: v
+        run: echo "version=$(cat VERSION)" >> $GITHUB_OUTPUT
+      - name: Build Docker image
+        run: docker build -t dark-audio-changer:${{ steps.v.outputs.version }} .
